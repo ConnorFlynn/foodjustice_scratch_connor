@@ -1,0 +1,73 @@
+---
+title: "Exploration of air/water impacts of pressures"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(here)
+library(tidyverse)
+```
+
+```{r}
+# load in data
+county_health <- read_csv(here("data/2021_County_Health_Rankings_Data.csv"))
+
+all_ghg_county <- read_csv(here("data/all_ghg_county.csv"))
+
+all_nutrient_county <- read_csv(here("data/all_nutrient_county.csv"))
+```
+
+
+```{r}
+county_health_air <- county_health %>% 
+  select(fips, air_pollution_avg_daily_pm2.5, air_pollution_avg_daily_pm2.5_quartile) %>% 
+   mutate(fips = if_else(str_length(fips) == 4,
+                        str_c("0", as.character(fips)),
+                        as.character(fips)))
+```
+
+```{r}
+county_health_air_ghg <- full_join(county_health_air, all_ghg_county )
+```
+
+```{r}
+lm(data = county_health_air_ghg, air_pollution_avg_daily_pm2.5 ~ mean)
+
+ggplot(data = county_health_air_ghg, aes(x = air_pollution_avg_daily_pm2.5, y = mean)) +
+  geom_smooth(method = lm)
+```
+
+```{r}
+glimpse(county_health)
+# drinking_water_violation
+```
+
+
+```{r}
+county_health_water <- county_health %>% 
+  select(fips, drinking_water_violation) %>% 
+   mutate(fips = if_else(str_length(fips) == 4,
+                        str_c("0", as.character(fips)),
+                        as.character(fips)))
+```
+
+
+
+```{r}
+county_health_water_nutrients <- full_join(county_health_water, all_nutrient_county)
+```
+
+```{r}
+county_health_water_nutrients <- county_health_water_nutrients %>% 
+  mutate(water_violation = ifelse(drinking_water_violation == "No",0,1))
+```
+
+
+```{r}
+lm(data = county_health_water_nutrients, water_violation ~ mean)
+
+ggplot(data = county_health_water_nutrients, aes(x = water_violation, y = mean)) +
+  geom_smooth(method = lm)
+```
+
